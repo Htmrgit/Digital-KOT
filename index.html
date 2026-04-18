@@ -3,206 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>QuickKOT - Digital POS</title>
+    <title>ProKOT - Table First POS</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
         
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --accent: #f43f5e;
+            --success: #10b981;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: #f8fafc;
+            color: #1e293b;
             -webkit-tap-highlight-color: transparent;
-            user-select: none;
+            overscroll-behavior-y: contain;
         }
 
-        .safe-area-bottom {
-            padding-bottom: env(safe-area-inset-bottom);
+        .glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
 
-        .menu-card {
-            transition: transform 0.1s active;
-        }
-        
-        .menu-card:active {
-            transform: scale(0.95);
+        .card-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
         }
 
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
-
-        /* Category Tab Active State */
         .category-tab.active {
-            background-color: #4f46e5;
+            background: var(--primary);
             color: white;
-            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.4);
+            box-shadow: 0 8px 12px -3px rgba(99, 102, 241, 0.3);
         }
 
-        /* Vibration Animation for add button */
-        @keyframes pulse-sm {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        .added-anim {
-            animation: pulse-sm 0.2s ease-in-out;
+        .table-card.active {
+            border-color: var(--primary);
+            background: #eff6ff;
         }
 
-        /* Modal backdrop blur */
-        .modal-overlay {
-            backdrop-filter: blur(4px);
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
+
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        /* Veg/Non-Veg Icons */
+        .veg-indicator { width: 12px; height: 12px; border: 1px solid #10b981; padding: 2px; display: flex; justify-content: center; align-items: center; }
+        .veg-dot { width: 6px; height: 6px; background: #10b981; border-radius: 50%; }
+        .nonveg-indicator { width: 12px; height: 12px; border: 1px solid #ef4444; padding: 2px; display: flex; justify-content: center; align-items: center; }
+        .nonveg-dot { width: 0; height: 0; border-left: 3px solid transparent; border-right: 3px solid transparent; border-bottom: 5px solid #ef4444; }
     </style>
 </head>
-<body class="overflow-x-hidden">
+<body class="selection:bg-indigo-100">
 
-    <!-- App Header -->
-    <header class="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shadow-sm">
-        <div class="flex items-center gap-2">
-            <div class="bg-indigo-600 text-white p-2 rounded-lg">
-                <i class="fas fa-utensils"></i>
-            </div>
-            <h1 class="text-xl font-bold text-slate-800">QuickKOT</h1>
-        </div>
-        <div class="flex gap-2">
-            <button onclick="switchTab('order')" id="tab-order" class="p-2 rounded-lg bg-indigo-50 text-indigo-600">
-                <i class="fas fa-plus"></i>
+    <!-- Header -->
+    <header class="sticky top-0 z-50 glass px-5 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <button id="back-btn" onclick="goToTables()" class="hidden w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center active:scale-90 transition-all">
+                <i class="fas fa-arrow-left"></i>
             </button>
-            <button onclick="switchTab('history')" id="tab-history" class="p-2 rounded-lg text-slate-500 hover:bg-slate-100">
-                <i class="fas fa-history"></i>
+            <div id="brand-logo" class="flex items-center gap-2">
+                <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100">
+                    <i class="fas fa-utensils text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-800 tracking-tight">ProKOT</h1>
+                    <p id="header-status" class="text-[10px] uppercase font-bold text-slate-400">Select Table</p>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="switchTab('history')" class="w-10 h-10 rounded-xl text-slate-400 hover:bg-slate-100 flex items-center justify-center relative">
+                <i class="fas fa-history text-lg"></i>
+                <span id="history-badge" class="hidden absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full"></span>
             </button>
         </div>
     </header>
 
-    <!-- MAIN ORDER SCREEN -->
-    <main id="view-order" class="p-4 mb-32 transition-opacity duration-300">
-        
-        <!-- Order Header Info -->
-        <div class="grid grid-cols-2 gap-3 mb-6">
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100">
-                <label class="text-xs font-semibold text-slate-400 uppercase block mb-1">Select Table</label>
-                <select id="table-select" class="w-full bg-transparent font-bold text-slate-800 focus:outline-none text-lg">
-                    <option value="">Table #</option>
-                    <option value="Table 1">Table 1</option>
-                    <option value="Table 2">Table 2</option>
-                    <option value="Table 3">Table 3</option>
-                    <option value="Table 4">Table 4</option>
-                    <option value="Table 5">Table 5</option>
-                    <option value="Table 6">Table 6</option>
-                    <option value="Table 7">Table 7</option>
-                    <option value="Table 8">Table 8</option>
-                    <option value="Parcel">Parcel / Takeaway</option>
-                </select>
+    <!-- STEP 1: TABLE SELECTION GRID -->
+    <main id="view-tables" class="px-5 py-6 animate-fade-in">
+        <div class="mb-6">
+            <h2 class="text-2xl font-800 text-slate-900 tracking-tight">Tables</h2>
+            <p class="text-sm text-slate-500 font-medium">Choose a table to start ordering</p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4" id="table-grid">
+            <!-- Tables generated by JS -->
+        </div>
+
+        <div class="mt-8">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Quick Actions</h3>
+            <button onclick="selectTable('Takeaway')" class="w-full bg-white p-5 rounded-3xl border border-slate-100 card-shadow flex items-center justify-between group active:bg-indigo-50 transition-all">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-xl">
+                        <i class="fas fa-bag-shopping"></i>
+                    </div>
+                    <div class="text-left">
+                        <p class="font-800 text-slate-800">Parcel / Takeaway</p>
+                        <p class="text-xs text-slate-400 font-medium">Quick checkout</p>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-right text-slate-300 group-active:text-indigo-500"></i>
+            </button>
+        </div>
+    </main>
+
+    <!-- STEP 2: CATEGORY WISE MENU -->
+    <main id="view-menu" class="hidden px-5 py-6 mb-32 animate-fade-in">
+        <!-- Current Table Info & Customer Name -->
+        <div class="bg-indigo-600 rounded-[2rem] p-6 mb-8 text-white shadow-xl shadow-indigo-100 flex flex-col gap-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <span class="text-[10px] font-black uppercase tracking-widest opacity-70">Active Table</span>
+                    <h3 id="display-selected-table" class="text-3xl font-800">Table 01</h3>
+                </div>
+                <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center text-2xl">
+                    <i class="fas fa-receipt"></i>
+                </div>
             </div>
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100">
-                <label class="text-xs font-semibold text-slate-400 uppercase block mb-1">Customer Name</label>
-                <input type="text" id="customer-name" placeholder="Optional" class="w-full bg-transparent font-medium text-slate-800 focus:outline-none">
+            <div class="relative">
+                <i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-white/50 text-sm"></i>
+                <input type="text" id="customer-name" placeholder="Customer Name (Optional)" class="w-full bg-white/10 border border-white/20 rounded-2xl pl-10 pr-4 py-3 text-sm font-bold placeholder:text-white/40 focus:bg-white/20 transition-all outline-none">
             </div>
         </div>
 
-        <!-- Menu Search & Categories -->
-        <div class="space-y-4 mb-6">
-            <!-- Item Search -->
-            <div class="relative">
-                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="menu-search" oninput="renderMenu()" placeholder="Search dishes (e.g. Paneer, Roti)..." class="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm text-sm">
+        <!-- Search & Filter -->
+        <div class="space-y-5 mb-8">
+            <div class="relative group">
+                <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors"></i>
+                <input type="text" id="menu-search" oninput="renderMenu()" placeholder="Search dishes..." class="w-full pl-12 pr-4 py-4 bg-white border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-50/50 shadow-sm transition-all text-sm font-medium">
             </div>
 
-            <!-- Categories -->
-            <div class="flex overflow-x-auto gap-2 pb-2 no-scrollbar custom-scrollbar">
-                <button onclick="filterMenu('All')" class="category-tab active px-5 py-2 rounded-full whitespace-nowrap text-sm font-semibold border border-slate-200 bg-white text-slate-600 transition-all">All</button>
-                <button onclick="filterMenu('Starters')" class="category-tab px-5 py-2 rounded-full whitespace-nowrap text-sm font-semibold border border-slate-200 bg-white text-slate-600 transition-all">Starters</button>
-                <button onclick="filterMenu('Main Course')" class="category-tab px-5 py-2 rounded-full whitespace-nowrap text-sm font-semibold border border-slate-200 bg-white text-slate-600 transition-all">Main Course</button>
-                <button onclick="filterMenu('Breads')" class="category-tab px-5 py-2 rounded-full whitespace-nowrap text-sm font-semibold border border-slate-200 bg-white text-slate-600 transition-all">Breads</button>
-                <button onclick="filterMenu('Drinks')" class="category-tab px-5 py-2 rounded-full whitespace-nowrap text-sm font-semibold border border-slate-200 bg-white text-slate-600 transition-all">Drinks</button>
+            <!-- Category Scrolling -->
+            <div class="flex overflow-x-auto gap-3 py-1 no-scrollbar">
+                <button onclick="filterMenu('All')" class="category-tab active px-6 py-2.5 rounded-2xl whitespace-nowrap text-sm font-bold bg-white text-slate-500 transition-all card-shadow">All Items</button>
+                <button onclick="filterMenu('Starters')" class="category-tab px-6 py-2.5 rounded-2xl whitespace-nowrap text-sm font-bold bg-white text-slate-500 transition-all card-shadow">Starters</button>
+                <button onclick="filterMenu('Main Course')" class="category-tab px-6 py-2.5 rounded-2xl whitespace-nowrap text-sm font-bold bg-white text-slate-500 transition-all card-shadow">Mains</button>
+                <button onclick="filterMenu('Breads')" class="category-tab px-6 py-2.5 rounded-2xl whitespace-nowrap text-sm font-bold bg-white text-slate-500 transition-all card-shadow">Breads</button>
+                <button onclick="filterMenu('Drinks')" class="category-tab px-6 py-2.5 rounded-2xl whitespace-nowrap text-sm font-bold bg-white text-slate-500 transition-all card-shadow">Drinks</button>
             </div>
         </div>
 
         <!-- Menu Grid -->
-        <div id="menu-grid" class="grid grid-cols-1 gap-3">
+        <div id="menu-grid" class="grid grid-cols-1 gap-4">
             <!-- Items injected by JS -->
         </div>
     </main>
 
-    <!-- HISTORY SCREEN -->
-    <main id="view-history" class="hidden p-4 transition-opacity duration-300">
-        <div class="mb-4">
-            <h2 class="text-2xl font-bold text-slate-800">Order History</h2>
-            <p class="text-sm text-slate-500">Track all kitchen tickets</p>
+    <!-- STEP 3: HISTORY -->
+    <main id="view-history" class="hidden px-5 py-6 min-h-screen">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-800 text-slate-900 tracking-tight">KOT History</h2>
+            <button onclick="clearHistory()" class="text-xs font-bold text-rose-500">Clear All</button>
         </div>
-
-        <div class="flex gap-2 mb-4">
-            <div class="relative flex-1">
-                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="history-search" onkeyup="renderHistory()" placeholder="Search KOT or Table..." class="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
-            </div>
-        </div>
-
-        <div id="history-list" class="space-y-3 pb-24">
-            <!-- History items injected by JS -->
+        <div id="history-list" class="space-y-4 pb-20">
+            <!-- History Items -->
         </div>
     </main>
 
-    <!-- Bottom Bar / Cart Button -->
-    <div id="bottom-cart-bar" class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 safe-area-bottom z-50">
-        <div class="flex items-center justify-between gap-4">
-            <div class="flex flex-col">
-                <span id="cart-item-count" class="text-xs font-bold text-slate-400 uppercase tracking-wider">0 Items</span>
-                <span id="cart-total-display" class="text-lg font-extrabold text-slate-800">Ready to Order</span>
-            </div>
-            <button onclick="toggleSummary()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-2xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95">
-                <i class="fas fa-receipt"></i>
-                View Summary
+    <!-- Floating Cart Bar -->
+    <div id="bottom-cart-bar" class="hidden fixed bottom-0 left-0 right-0 p-6 z-50">
+        <div class="max-w-md mx-auto">
+            <button onclick="toggleSummary()" class="w-full bg-slate-900 text-white p-4 rounded-[2rem] flex items-center justify-between shadow-2xl active:scale-95 transition-all">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-xl shadow-lg">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                    <div class="text-left">
+                        <p id="cart-item-count" class="text-[10px] font-bold uppercase tracking-widest text-indigo-400">0 Items</p>
+                        <p id="cart-total-display" class="text-lg font-bold">Review Order</p>
+                    </div>
+                </div>
+                <div class="bg-white/10 px-4 py-2 rounded-full flex items-center gap-2">
+                    <span class="text-sm font-bold">NEXT</span>
+                    <i class="fas fa-arrow-right text-xs"></i>
+                </div>
             </button>
         </div>
     </div>
 
-    <!-- Order Summary Bottom Sheet -->
+    <!-- Summary Modal -->
     <div id="summary-modal" class="hidden fixed inset-0 z-[60]">
-        <div onclick="toggleSummary()" class="modal-overlay absolute inset-0 bg-slate-900/60"></div>
-        <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-[2.5rem] p-6 shadow-2xl transition-transform duration-300 transform translate-y-full" id="summary-content">
-            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6"></div>
-            
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-slate-800">Order Summary</h3>
-                <button onclick="clearOrderConfirm()" class="text-red-500 text-sm font-semibold flex items-center gap-1">
-                    <i class="fas fa-trash"></i> Clear All
-                </button>
+        <div onclick="toggleSummary()" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+        <div id="summary-content" class="absolute bottom-0 left-0 right-0 bg-white rounded-t-[3rem] p-8 transition-transform duration-300 translate-y-full shadow-2xl">
+            <div class="w-16 h-1.5 bg-slate-100 rounded-full mx-auto mb-8"></div>
+            <div class="flex justify-between items-end mb-8">
+                <div>
+                    <h3 class="text-3xl font-800 text-slate-900">Summary</h3>
+                    <p id="summary-meta" class="text-sm font-medium text-slate-500">Table Info</p>
+                </div>
+                <button onclick="clearOrderConfirm()" class="w-10 h-10 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center"><i class="fas fa-trash"></i></button>
             </div>
-
-            <div id="summary-items" class="max-h-[50vh] overflow-y-auto space-y-4 mb-6 custom-scrollbar pr-2">
-                <!-- Cart items injected by JS -->
-            </div>
-
-            <div class="flex flex-col gap-3">
-                <button onclick="sendOrder()" class="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-bold text-lg shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all">
-                    <i class="fab fa-whatsapp text-2xl"></i>
-                    Send to Kitchen (WhatsApp)
-                </button>
-                <button onclick="toggleSummary()" class="w-full text-slate-500 font-bold py-2">
-                    Back to Menu
+            <div id="summary-items" class="max-h-[40vh] overflow-y-auto space-y-4 mb-8 no-scrollbar"></div>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center font-800 text-xl px-2">
+                    <span class="text-slate-400 uppercase text-[10px]">Total Amount</span>
+                    <span id="final-total" class="text-indigo-600">₹0</span>
+                </div>
+                <button onclick="sendOrder()" class="w-full bg-emerald-600 text-white py-5 rounded-[2rem] font-800 text-xl shadow-xl flex items-center justify-center gap-4 active:scale-95 transition-all">
+                    <i class="fab fa-whatsapp text-2xl"></i> SEND TO KITCHEN
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Simple Custom Confirmation Modal -->
-    <div id="confirm-modal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4">
+    <!-- Alert/Confirm Modal -->
+    <div id="confirm-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-6">
         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
-        <div class="relative bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl">
-            <h4 id="confirm-title" class="text-xl font-bold text-slate-800 mb-2">Are you sure?</h4>
-            <p id="confirm-msg" class="text-slate-500 mb-6">This will clear your current selection.</p>
-            <div class="flex gap-3">
-                <button onclick="closeConfirm()" class="flex-1 py-3 font-bold text-slate-400 hover:bg-slate-50 rounded-xl">Cancel</button>
-                <button id="confirm-btn" class="flex-1 py-3 font-bold text-white bg-red-500 rounded-xl shadow-lg">Confirm</button>
+        <div class="relative bg-white rounded-[2.5rem] p-8 w-full max-w-sm text-center">
+            <h4 id="confirm-title" class="text-2xl font-800 mb-2">Are you sure?</h4>
+            <p id="confirm-msg" class="text-slate-500 mb-8">This action is permanent.</p>
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="closeConfirm()" class="py-4 font-bold text-slate-400">Cancel</button>
+                <button id="confirm-btn" class="py-4 font-bold text-white bg-rose-500 rounded-2xl">Confirm</button>
             </div>
         </div>
     </div>
@@ -210,23 +234,21 @@
     <script>
         // --- DATA ---
         const WHATSAPP_NUMBER = "919910109626";
-        const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'kot-app-v1';
+        const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'pro-kot-v3';
 
         const menuData = [
-            { id: 1, name: "Paneer Butter Masala", price: 240, category: "Main Course", isVeg: true },
-            { id: 2, name: "Chicken Tikka", price: 320, category: "Starters", isVeg: false },
-            { id: 3, name: "Butter Roti", price: 25, category: "Breads", isVeg: true },
-            { id: 4, name: "Garlic Naan", price: 45, category: "Breads", isVeg: true },
-            { id: 5, name: "Crispy Corn", price: 180, category: "Starters", isVeg: true },
-            { id: 6, name: "Dal Makhani", price: 210, category: "Main Course", isVeg: true },
-            { id: 7, name: "Mutton Rogan Josh", price: 450, category: "Main Course", isVeg: false },
-            { id: 8, name: "Fresh Lime Soda", price: 80, category: "Drinks", isVeg: true },
-            { id: 9, name: "Gulab Jamun", price: 60, category: "Desserts", isVeg: true },
-            { id: 10, name: "Tandoori Chicken", price: 350, category: "Starters", isVeg: false },
-            { id: 11, name: "Jeera Rice", price: 120, category: "Main Course", isVeg: true },
-            { id: 12, name: "Coke / Sprite", price: 40, category: "Drinks", isVeg: true }
+            { id: 1, name: "Paneer Butter Masala", price: 240, category: "Main Course", isVeg: true, desc: "Creamy tomato curry" },
+            { id: 2, name: "Chicken Tikka", price: 320, category: "Starters", isVeg: false, desc: "Tandoori grilled chicken" },
+            { id: 3, name: "Butter Roti", price: 25, category: "Breads", isVeg: true, desc: "Whole wheat bread" },
+            { id: 4, name: "Garlic Naan", price: 45, category: "Breads", isVeg: true, desc: "Soft leavened bread" },
+            { id: 5, name: "Crispy Corn", price: 180, category: "Starters", isVeg: true, desc: "Spicy fried corn" },
+            { id: 6, name: "Dal Makhani", price: 210, category: "Main Course", isVeg: true, desc: "Black lentils slow cooked" },
+            { id: 7, name: "Mutton Curry", price: 450, category: "Main Course", isVeg: false, desc: "Spicy goat meat curry" },
+            { id: 8, name: "Masala Chai", price: 40, category: "Drinks", isVeg: true, desc: "Indian spiced tea" },
+            { id: 9, name: "Cold Coffee", price: 120, category: "Drinks", isVeg: true, desc: "Blended with icecream" }
         ];
 
+        let selectedTable = null;
         let currentCart = {};
         let activeCategory = 'All';
         let history = JSON.parse(localStorage.getItem(`${APP_ID}_history`) || "[]");
@@ -234,35 +256,54 @@
         // --- APP LOGIC ---
 
         function init() {
+            renderTables();
+            updateHistoryBadge();
+        }
+
+        function renderTables() {
+            const grid = document.getElementById('table-grid');
+            grid.innerHTML = '';
+            for (let i = 1; i <= 9; i++) {
+                const tableId = `Table ${i}`;
+                const div = document.createElement('div');
+                div.onclick = () => selectTable(tableId);
+                div.className = "bg-white p-6 rounded-3xl border border-slate-100 card-shadow flex flex-col items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer";
+                div.innerHTML = `
+                    <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center text-lg font-bold">
+                        ${i.toString().padStart(2, '0')}
+                    </div>
+                    <span class="text-xs font-bold text-slate-400 uppercase">Table</span>
+                `;
+                grid.appendChild(div);
+            }
+        }
+
+        function selectTable(tableId) {
+            selectedTable = tableId;
+            document.getElementById('view-tables').classList.add('hidden');
+            document.getElementById('view-menu').classList.remove('hidden');
+            document.getElementById('back-btn').classList.remove('hidden');
+            document.getElementById('display-selected-table').innerText = tableId;
+            document.getElementById('header-status').innerText = 'Ordering';
             renderMenu();
-            renderHistory();
-            updateCartDisplay();
+        }
+
+        function goToTables() {
+            selectedTable = null;
+            document.getElementById('view-tables').classList.remove('hidden');
+            document.getElementById('view-menu').classList.add('hidden');
+            document.getElementById('view-history').classList.add('hidden');
+            document.getElementById('back-btn').classList.add('hidden');
+            document.getElementById('header-status').innerText = 'Select Table';
         }
 
         function switchTab(tab) {
-            const orderView = document.getElementById('view-order');
-            const historyView = document.getElementById('view-history');
-            const bottomBar = document.getElementById('bottom-cart-bar');
-            
-            const btnOrder = document.getElementById('tab-order');
-            const btnHistory = document.getElementById('tab-history');
-
-            if (tab === 'order') {
-                orderView.classList.remove('hidden');
-                historyView.classList.add('hidden');
-                bottomBar.classList.remove('hidden');
-                btnOrder.classList.add('bg-indigo-50', 'text-indigo-600');
-                btnOrder.classList.remove('text-slate-500');
-                btnHistory.classList.remove('bg-indigo-50', 'text-indigo-600');
-                btnHistory.classList.add('text-slate-500');
-            } else {
-                orderView.classList.add('hidden');
-                historyView.classList.remove('hidden');
-                bottomBar.classList.add('hidden');
-                btnHistory.classList.add('bg-indigo-50', 'text-indigo-600');
-                btnHistory.classList.remove('text-slate-500');
-                btnOrder.classList.remove('bg-indigo-50', 'text-indigo-600');
-                btnOrder.classList.add('text-slate-500');
+            if (tab === 'history') {
+                document.getElementById('view-tables').classList.add('hidden');
+                document.getElementById('view-menu').classList.add('hidden');
+                document.getElementById('view-history').classList.remove('hidden');
+                document.getElementById('back-btn').classList.remove('hidden');
+                document.getElementById('header-status').innerText = 'History';
                 renderHistory();
             }
         }
@@ -270,54 +311,43 @@
         function filterMenu(category) {
             activeCategory = category;
             document.querySelectorAll('.category-tab').forEach(btn => {
-                if(btn.innerText === category) btn.classList.add('active');
-                else btn.classList.remove('active');
+                btn.classList.toggle('active', btn.innerText.includes(category));
             });
             renderMenu();
         }
 
         function renderMenu() {
             const container = document.getElementById('menu-grid');
-            const searchQuery = document.getElementById('menu-search').value.toLowerCase().trim();
+            const search = document.getElementById('menu-search').value.toLowerCase();
             container.innerHTML = '';
 
-            // Apply Category Filter + Search Filter
             const filtered = menuData.filter(item => {
-                const matchesCategory = activeCategory === 'All' || item.category === activeCategory;
-                const matchesSearch = item.name.toLowerCase().includes(searchQuery);
-                return matchesCategory && matchesSearch;
+                const matchCat = activeCategory === 'All' || item.category === activeCategory;
+                const matchSearch = item.name.toLowerCase().includes(search);
+                return matchCat && matchSearch;
             });
-
-            if (filtered.length === 0) {
-                container.innerHTML = `
-                    <div class="py-12 text-center">
-                        <i class="fas fa-search text-slate-200 text-5xl mb-4"></i>
-                        <p class="text-slate-400 font-medium">No items match your search</p>
-                    </div>
-                `;
-                return;
-            }
 
             filtered.forEach(item => {
                 const qty = currentCart[item.id]?.qty || 0;
                 const card = document.createElement('div');
-                card.className = "bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between transition-all menu-card";
+                card.className = "bg-white p-4 rounded-3xl border border-slate-100 card-shadow flex items-center justify-between";
                 card.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <div class="w-2 h-2 rounded-full ${item.isVeg ? 'bg-green-500' : 'bg-red-500'}"></div>
+                    <div class="flex items-center gap-4">
+                        <div class="relative">
+                            <div class="${item.isVeg ? 'veg-indicator' : 'nonveg-indicator'} bg-white absolute -top-1 -left-1 rounded-sm shadow-sm">
+                                <div class="${item.isVeg ? 'veg-dot' : 'nonveg-dot'}"></div>
+                            </div>
+                            <div class="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center font-black text-indigo-400">${item.name.charAt(0)}</div>
+                        </div>
                         <div>
-                            <h4 class="font-bold text-slate-800">${item.name}</h4>
-                            <p class="text-xs font-semibold text-slate-400">₹${item.price}</p>
+                            <h4 class="font-800 text-slate-800 leading-tight">${item.name}</h4>
+                            <p class="text-[10px] text-slate-400 font-bold">₹${item.price}</p>
                         </div>
                     </div>
-                    <div class="flex items-center bg-slate-50 rounded-xl p-1 border border-slate-100">
-                        <button onclick="updateQty(${item.id}, -1)" class="w-10 h-10 flex items-center justify-center text-slate-400 active:text-indigo-600">
-                            <i class="fas fa-minus text-xs"></i>
-                        </button>
-                        <span id="qty-${item.id}" class="w-8 text-center font-bold text-slate-800">${qty}</span>
-                        <button onclick="updateQty(${item.id}, 1)" class="w-10 h-10 flex items-center justify-center text-indigo-600 active:scale-125 transition-transform">
-                            <i class="fas fa-plus text-xs"></i>
-                        </button>
+                    <div class="flex flex-col items-center bg-slate-50 rounded-2xl p-1 border border-slate-100">
+                        <button onclick="updateQty(${item.id}, 1)" class="w-10 h-10 bg-white rounded-xl text-indigo-600 shadow-sm active:scale-110 transition-transform"><i class="fas fa-plus text-xs"></i></button>
+                        <span id="qty-${item.id}" class="h-8 flex items-center justify-center font-bold text-slate-700">${qty}</span>
+                        <button onclick="updateQty(${item.id}, -1)" class="w-10 h-10 text-slate-300 active:text-rose-500 transition-colors"><i class="fas fa-minus text-xs"></i></button>
                     </div>
                 `;
                 container.appendChild(card);
@@ -325,51 +355,41 @@
         }
 
         function updateQty(id, delta) {
-            if (navigator.vibrate) navigator.vibrate(10);
-
+            if (navigator.vibrate) navigator.vibrate(5);
             const item = menuData.find(m => m.id === id);
-            if (!currentCart[id]) {
-                if (delta > 0) {
-                    currentCart[id] = { ...item, qty: 1 };
-                }
-            } else {
+            if (!currentCart[id] && delta > 0) currentCart[id] = { ...item, qty: 1 };
+            else if (currentCart[id]) {
                 currentCart[id].qty += delta;
-                if (currentCart[id].qty <= 0) {
-                    delete currentCart[id];
-                }
+                if (currentCart[id].qty <= 0) delete currentCart[id];
             }
             
-            // Visual feedback
-            const qtyLabel = document.getElementById(`qty-${id}`);
-            if (qtyLabel) {
-                qtyLabel.innerText = currentCart[id]?.qty || 0;
-                qtyLabel.classList.add('added-anim');
-                setTimeout(() => qtyLabel.classList.remove('added-anim'), 200);
-            }
-
+            const label = document.getElementById(`qty-${id}`);
+            if (label) label.innerText = currentCart[id]?.qty || 0;
             updateCartDisplay();
         }
 
         function updateCartDisplay() {
             const items = Object.values(currentCart);
             const totalItems = items.reduce((acc, curr) => acc + curr.qty, 0);
+            const totalAmount = items.reduce((acc, curr) => acc + (curr.qty * curr.price), 0);
             
-            document.getElementById('cart-item-count').innerText = `${totalItems} Items`;
-            
+            const bar = document.getElementById('bottom-cart-bar');
             if (totalItems > 0) {
-                document.getElementById('cart-total-display').innerText = `KOT Pending...`;
-                document.getElementById('bottom-cart-bar').classList.remove('translate-y-full');
+                bar.classList.remove('hidden');
+                document.getElementById('cart-item-count').innerText = `${totalItems} Items Selected`;
+                document.getElementById('cart-total-display').innerText = `Amount: ₹${totalAmount}`;
             } else {
-                document.getElementById('cart-total-display').innerText = `Ready to Order`;
+                bar.classList.add('hidden');
             }
         }
 
         function toggleSummary() {
             const modal = document.getElementById('summary-modal');
             const content = document.getElementById('summary-content');
-            
             if (modal.classList.contains('hidden')) {
-                renderSummary();
+                const customer = document.getElementById('customer-name').value || "Guest";
+                document.getElementById('summary-meta').innerText = `${selectedTable} • ${customer}`;
+                renderSummaryList();
                 modal.classList.remove('hidden');
                 setTimeout(() => content.classList.remove('translate-y-full'), 10);
             } else {
@@ -378,244 +398,82 @@
             }
         }
 
-        function renderSummary() {
+        function renderSummaryList() {
             const container = document.getElementById('summary-items');
             container.innerHTML = '';
-            
-            const items = Object.values(currentCart);
-            
-            if (items.length === 0) {
-                container.innerHTML = `
-                    <div class="py-12 text-center">
-                        <i class="fas fa-shopping-basket text-slate-200 text-5xl mb-4"></i>
-                        <p class="text-slate-400 font-medium">Your cart is empty</p>
-                    </div>
-                `;
-                return;
-            }
-
-            items.forEach(item => {
+            let total = 0;
+            Object.values(currentCart).forEach(item => {
+                total += item.qty * item.price;
                 const div = document.createElement('div');
-                div.className = "flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-100";
-                div.innerHTML = `
-                    <div class="flex-1">
-                        <h5 class="font-bold text-slate-800">${item.name}</h5>
-                        <p class="text-xs text-slate-400 font-semibold">Qty: ${item.qty} × ₹${item.price}</p>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <span class="font-bold text-slate-800">₹${item.qty * item.price}</span>
-                        <button onclick="updateQty(${item.id}, -1); renderSummary();" class="text-red-400 hover:text-red-500">
-                            <i class="fas fa-minus-circle text-lg"></i>
-                        </button>
-                    </div>
-                `;
+                div.className = "flex justify-between items-center bg-slate-50 p-4 rounded-2xl";
+                div.innerHTML = `<div><p class="font-bold text-slate-800">${item.name}</p><p class="text-[10px] text-slate-400 font-bold">${item.qty} x ₹${item.price}</p></div><span class="font-800">₹${item.qty * item.price}</span>`;
                 container.appendChild(div);
             });
-        }
-
-        function generateKOTId() {
-            const now = new Date();
-            const dateStr = now.getFullYear() + 
-                            String(now.getMonth() + 1).padStart(2, '0') + 
-                            String(now.getDate()).padStart(2, '0');
-            
-            // Find orders from today to increment counter
-            const todayKOTs = history.filter(o => o.kotId.includes(`KOT-${dateStr}`));
-            const nextNum = (todayKOTs.length + 1).toString().padStart(3, '0');
-            
-            return `KOT-${dateStr}-${nextNum}`;
+            document.getElementById('final-total').innerText = `₹${total}`;
         }
 
         function sendOrder() {
-            const table = document.getElementById('table-select').value;
             const customer = document.getElementById('customer-name').value || "Guest";
             const items = Object.values(currentCart);
+            if (items.length === 0) return;
 
-            if (!table) {
-                showSimpleAlert("Error", "Please select a Table number first.", "bg-red-500");
-                return;
-            }
+            const now = new Date();
+            const dateStr = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+            const kotId = `KOT-${dateStr}-${(history.length + 1).toString().padStart(3, '0')}`;
+            const time = now.toLocaleString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
 
-            if (items.length === 0) {
-                showSimpleAlert("Error", "Your order is empty.", "bg-red-500");
-                return;
-            }
+            let msg = `*🔥 NEW KOT: ${kotId}*\n*📍 TABLE:* ${selectedTable}\n*👤 CUSTOMER:* ${customer}\n----------------------------\n`;
+            items.forEach(i => msg += `• ${i.name} x ${i.qty}\n`);
+            msg += `----------------------------\n*⏰ TIME:* ${time}`;
 
-            const kotId = generateKOTId();
-            const timestamp = new Date().toLocaleString('en-IN', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            });
-
-            // Build Message
-            let message = `*KOT No:* ${kotId}\n`;
-            message += `*Table:* ${table}\n`;
-            message += `*Customer:* ${customer}\n`;
-            message += `----------------------------\n`;
-            message += `*Items:*\n`;
-            items.forEach(item => {
-                message += `• ${item.name} x${item.qty}\n`;
-            });
-            message += `----------------------------\n`;
-            message += `*Time:* ${timestamp}`;
-
-            // Save to LocalStorage
-            const orderObj = {
-                kotId,
-                table,
-                customer,
-                items,
-                timestamp,
-                total: items.reduce((a, b) => a + (b.qty * b.price), 0)
-            };
-            
-            history.unshift(orderObj);
+            history.unshift({ kotId, table: selectedTable, customer, items, total: items.reduce((a, b) => a + (b.qty * b.price), 0), time: now.toLocaleString() });
             localStorage.setItem(`${APP_ID}_history`, JSON.stringify(history));
 
-            // Reset and Close
-            const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-            
-            // Reset state
+            // Reset
             currentCart = {};
             document.getElementById('customer-name').value = '';
-            document.getElementById('table-select').value = '';
-            document.getElementById('menu-search').value = ''; // Reset search
-            
-            toggleSummary();
             updateCartDisplay();
-            renderMenu();
-            renderHistory();
+            updateHistoryBadge();
+            toggleSummary();
+            goToTables();
 
-            // Fire and Forget WhatsApp
-            window.open(waUrl, '_blank');
+            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
         function renderHistory() {
             const container = document.getElementById('history-list');
-            const search = document.getElementById('history-search').value.toLowerCase();
-            container.innerHTML = '';
-
-            const filteredHistory = history.filter(item => 
-                item.kotId.toLowerCase().includes(search) || 
-                item.table.toLowerCase().includes(search)
-            );
-
-            if (filteredHistory.length === 0) {
-                container.innerHTML = `
-                    <div class="py-20 text-center">
-                        <i class="fas fa-ghost text-slate-200 text-6xl mb-4"></i>
-                        <p class="text-slate-400 font-bold">No history found</p>
-                    </div>
-                `;
-                return;
-            }
-
-            filteredHistory.forEach((order, idx) => {
+            container.innerHTML = history.length === 0 ? '<p class="text-center text-slate-300 py-10 font-bold">No Records</p>' : '';
+            history.forEach((order, idx) => {
                 const div = document.createElement('div');
-                div.className = "bg-white p-5 rounded-3xl shadow-sm border border-slate-100";
-                
-                let itemsList = order.items.map(i => `<div class="flex justify-between py-1 border-b border-dashed border-slate-100">
-                    <span class="text-slate-600">${i.name} × ${i.qty}</span>
-                    <span class="font-semibold text-slate-800">₹${i.qty * i.price}</span>
-                </div>`).join('');
-
+                div.className = "bg-white p-6 rounded-[2rem] border border-slate-100 card-shadow";
                 div.innerHTML = `
                     <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <span class="bg-indigo-50 text-indigo-600 text-[10px] font-black px-2 py-1 rounded-md uppercase mb-1 inline-block">${order.kotId}</span>
-                            <h4 class="text-xl font-extrabold text-slate-800">${order.table}</h4>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-xs text-slate-400 font-medium">${order.timestamp}</p>
-                            <p class="text-lg font-black text-indigo-600">₹${order.total}</p>
-                        </div>
+                        <div><span class="text-[9px] font-black text-indigo-500 uppercase">${order.kotId}</span><h4 class="text-xl font-800">${order.table}</h4></div>
+                        <div class="text-right"><p class="text-[10px] text-slate-400 font-bold">${order.time}</p><span class="text-lg font-black text-indigo-600">₹${order.total}</span></div>
                     </div>
-                    <div class="bg-slate-50/50 rounded-2xl p-3 text-sm mb-4">
-                        ${itemsList}
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="reSendOrder(${idx})" class="flex-1 bg-slate-800 text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2">
-                            <i class="fab fa-whatsapp"></i> Re-send
-                        </button>
-                        <button onclick="deleteHistory(${idx})" class="w-12 h-12 bg-red-50 text-red-400 rounded-xl flex items-center justify-center">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl text-sm font-medium text-slate-600 mb-4">${order.items.map(i => `<div class="flex justify-between"><span>${i.name}</span><span>x${i.qty}</span></div>`).join('')}</div>
+                    <button onclick="deleteHistoryItem(${idx})" class="w-full text-rose-400 font-bold py-2">Delete Record</button>
                 `;
                 container.appendChild(div);
             });
         }
 
-        function reSendOrder(index) {
-            const order = history[index];
-            let message = `*RESENT KOT No:* ${order.kotId}\n`;
-            message += `*Table:* ${order.table}\n`;
-            message += `*Customer:* ${order.customer}\n`;
-            message += `----------------------------\n`;
-            message += `*Items:*\n`;
-            order.items.forEach(item => {
-                message += `• ${item.name} x${item.qty}\n`;
-            });
-            message += `----------------------------\n`;
-            message += `*Original Time:* ${order.timestamp}`;
-
-            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
+        function updateHistoryBadge() {
+            document.getElementById('history-badge').classList.toggle('hidden', history.length === 0);
         }
 
-        function deleteHistory(index) {
-            showSimpleConfirm("Delete Record?", "This will permanently remove this KOT from history.", "Delete", () => {
-                history.splice(index, 1);
-                localStorage.setItem(`${APP_ID}_history`, JSON.stringify(history));
-                renderHistory();
-                closeConfirm();
-            });
+        function deleteHistoryItem(idx) {
+            history.splice(idx, 1);
+            localStorage.setItem(`${APP_ID}_history`, JSON.stringify(history));
+            renderHistory();
+            updateHistoryBadge();
         }
 
-        function clearOrderConfirm() {
-            showSimpleConfirm("Clear Order?", "This will remove all items from your current cart.", "Clear", () => {
-                currentCart = {};
-                updateCartDisplay();
-                renderMenu();
-                toggleSummary();
-                closeConfirm();
-            });
-        }
+        function clearHistory() { history = []; localStorage.setItem(`${APP_ID}_history`, "[]"); renderHistory(); updateHistoryBadge(); }
+        function closeConfirm() { document.getElementById('confirm-modal').classList.add('hidden'); }
+        function clearOrderConfirm() { currentCart = {}; updateCartDisplay(); toggleSummary(); renderMenu(); }
 
-        // --- UTILS ---
-
-        function showSimpleAlert(title, msg, colorClass) {
-            // Simplified for non-blocking UI
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `fixed top-10 left-1/2 -translate-x-1/2 z-[100] ${colorClass} text-white px-6 py-4 rounded-2xl shadow-2xl font-bold animate-bounce`;
-            alertDiv.innerText = msg;
-            document.body.appendChild(alertDiv);
-            setTimeout(() => alertDiv.remove(), 2500);
-        }
-
-        function showSimpleConfirm(title, msg, btnText, callback) {
-            const modal = document.getElementById('confirm-modal');
-            document.getElementById('confirm-title').innerText = title;
-            document.getElementById('confirm-msg').innerText = msg;
-            const btn = document.getElementById('confirm-btn');
-            btn.innerText = btnText;
-            btn.onclick = callback;
-            modal.classList.remove('hidden');
-        }
-
-        function closeConfirm() {
-            document.getElementById('confirm-modal').classList.add('hidden');
-        }
-
-        // Handle PWA and Scroll behaviors
         window.addEventListener('load', init);
-        
-        // Disable pinch zoom on iOS
-        document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
-
     </script>
 </body>
 </html>
